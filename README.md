@@ -23,17 +23,10 @@ npm start
 http://localhost:3000
 ```
 
-默认管理员：
-
-```text
-用户名：admin
-密码：admin123456
-```
-
-可以通过环境变量修改端口和管理员初始密码：
+建议首次启动时通过环境变量设置初始管理员和端口：
 
 ```bash
-PORT=4000 ADMIN_PASSWORD=your-password npm start
+ADMIN_USERNAME=your-admin-name ADMIN_PASSWORD=your-password ADMIN_NICKNAME=管理员 PORT=3000 npm start
 ```
 
 ## 测试
@@ -44,4 +37,4 @@ npm test
 
 ## 数据
 
-用户数据保存在 `data/users.json`。第一次启动时，如果没有管理员账户，系统会自动创建默认管理员。
+用户数据保存在 `data/users.json`。第一次启动时，如果没有管理员账户，系统会自动创建一个初始管理员。

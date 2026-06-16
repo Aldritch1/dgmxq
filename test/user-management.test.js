@@ -7,9 +7,17 @@ import { createApp } from '../src/server.js';
 
 async function withServer(run) {
   const dataDir = await mkdtemp(path.join(tmpdir(), 'dgmxq-users-'));
+  const admin = {
+    username: `owner-${Date.now()}`,
+    password: `secret-${Date.now()}`,
+    nickname: 'System Owner',
+  };
   const app = await createApp({
     dataFile: path.join(dataDir, 'users.json'),
     sessionSecret: 'test-secret',
+    adminUsername: admin.username,
+    adminPassword: admin.password,
+    adminNickname: admin.nickname,
   });
   const server = app.listen(0);
 
@@ -17,7 +25,7 @@ async function withServer(run) {
     await new Promise((resolve) => server.once('listening', resolve));
     const baseUrl = `http://127.0.0.1:${server.address().port}`;
     const jar = new CookieJar();
-    await run({ baseUrl, jar });
+    await run({ baseUrl, jar, admin });
   } finally {
     await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
     await rm(dataDir, { recursive: true, force: true });
@@ -139,8 +147,8 @@ test('blocks ordinary users from the admin user list', async () => {
   });
 });
 
-test('allows the default administrator to delete an ordinary user', async () => {
-  await withServer(async ({ baseUrl, jar }) => {
+test('allows the configured administrator to delete an ordinary user', async () => {
+  await withServer(async ({ baseUrl, jar, admin }) => {
     await request(baseUrl, jar, '/register', {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
@@ -151,7 +159,7 @@ test('allows the default administrator to delete an ordinary user', async () => 
     await request(baseUrl, adminJar, '/login', {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: form({ username: 'admin', password: 'admin123456' }),
+      body: form({ username: admin.username, password: admin.password }),
     });
 
     const list = await request(baseUrl, adminJar, '/admin/users');
@@ -171,15 +179,15 @@ test('allows the default administrator to delete an ordinary user', async () => 
 });
 
 test('prevents administrators from deleting themselves or other administrators', async () => {
-  await withServer(async ({ baseUrl, jar }) => {
+  await withServer(async ({ baseUrl, jar, admin }) => {
     await request(baseUrl, jar, '/login', {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: form({ username: 'admin', password: 'admin123456' }),
+      body: form({ username: admin.username, password: admin.password }),
     });
 
     const list = await request(baseUrl, jar, '/admin/users');
-    const adminId = (await list.text()).match(/data-username="admin" data-user-id="(\d+)"/)?.[1];
+    const adminId = (await list.text()).match(new RegExp(`data-username="${admin.username}" data-user-id="(\\d+)"`))?.[1];
 
     assert.ok(adminId);
 

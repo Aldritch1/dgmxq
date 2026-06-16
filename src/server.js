@@ -9,13 +9,17 @@ const scrypt = promisify(scryptCallback);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const defaultDataFile = join(__dirname, '..', 'data', 'users.json');
 const defaultSessionSecret = process.env.SESSION_SECRET ?? randomBytes(32).toString('hex');
-const defaultAdminPassword = process.env.ADMIN_PASSWORD ?? 'admin123456';
 const sessions = new Map();
 
 export async function createApp(options = {}) {
   const dataFile = options.dataFile ?? defaultDataFile;
   const sessionSecret = options.sessionSecret ?? defaultSessionSecret;
-  const store = createStore(dataFile);
+  const adminCredentials = {
+    username: options.adminUsername ?? process.env.ADMIN_USERNAME ?? 'admin',
+    password: options.adminPassword ?? process.env.ADMIN_PASSWORD ?? randomBytes(18).toString('base64url'),
+    nickname: options.adminNickname ?? process.env.ADMIN_NICKNAME ?? '管理员',
+  };
+  const store = createStore(dataFile, adminCredentials);
   await store.initialize();
 
   return createServer(async (request, response) => {
@@ -142,7 +146,7 @@ async function route(request, response, store, sessionSecret) {
   sendHtml(response, 404, page('未找到', '<p class="message error">页面不存在。</p>'));
 }
 
-function createStore(dataFile) {
+function createStore(dataFile, adminCredentials) {
   return {
     async initialize() {
       await mkdir(dirname(dataFile), { recursive: true });
@@ -155,10 +159,10 @@ function createStore(dataFile) {
             ...data.users,
             {
               id: 1,
-              username: 'admin',
-              nickname: '管理员',
+              username: adminCredentials.username,
+              nickname: adminCredentials.nickname,
               role: 'admin',
-              passwordHash: await hashPassword(defaultAdminPassword),
+              passwordHash: await hashPassword(adminCredentials.password),
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
             },
@@ -612,6 +616,6 @@ if (process.argv[1] && basename(process.argv[1]) === 'server.js') {
   const app = await createApp();
   app.listen(port, () => {
     console.log(`用户管理系统已启动：http://localhost:${port}`);
-    console.log('默认管理员：admin / admin123456');
+    console.log('请通过 ADMIN_USERNAME、ADMIN_PASSWORD 和 ADMIN_NICKNAME 配置初始管理员。');
   });
 }
