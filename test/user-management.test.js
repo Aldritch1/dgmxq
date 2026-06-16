@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -26,6 +26,41 @@ async function withServer(run) {
     const baseUrl = `http://127.0.0.1:${server.address().port}`;
     const jar = new CookieJar();
     await run({ baseUrl, jar, admin });
+  } finally {
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+    await rm(dataDir, { recursive: true, force: true });
+  }
+}
+
+async function withServerUsingEnvFile(run) {
+  const dataDir = await mkdtemp(path.join(tmpdir(), 'dgmxq-users-'));
+  const envFile = path.join(dataDir, '.env');
+  const admin = {
+    username: `env-owner-${Date.now()}`,
+    password: `env-secret-${Date.now()}`,
+    nickname: 'Env Owner',
+  };
+  await writeFile(
+    envFile,
+    [
+      `ADMIN_USERNAME=${admin.username}`,
+      `ADMIN_PASSWORD=${admin.password}`,
+      `ADMIN_NICKNAME=${admin.nickname}`,
+      '',
+    ].join('\n'),
+    'utf8',
+  );
+  const app = await createApp({
+    dataFile: path.join(dataDir, 'users.json'),
+    envFile,
+    sessionSecret: 'test-secret',
+  });
+  const server = app.listen(0);
+
+  try {
+    await new Promise((resolve) => server.once('listening', resolve));
+    const baseUrl = `http://127.0.0.1:${server.address().port}`;
+    await run({ baseUrl, admin });
   } finally {
     await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
     await rm(dataDir, { recursive: true, force: true });
@@ -195,5 +230,21 @@ test('prevents administrators from deleting themselves or other administrators',
       method: 'POST',
     });
     assert.equal(deletion.status, 403);
+  });
+});
+
+test('loads administrator credentials from an env file', async () => {
+  await withServerUsingEnvFile(async ({ baseUrl, admin }) => {
+    const jar = new CookieJar();
+    const login = await request(baseUrl, jar, '/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: form({ username: admin.username, password: admin.password }),
+    });
+    assert.equal(login.status, 303);
+
+    const users = await request(baseUrl, jar, '/admin/users');
+    assert.equal(users.status, 200);
+    assert.match(await users.text(), new RegExp(admin.nickname));
   });
 });

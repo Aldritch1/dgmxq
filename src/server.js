@@ -8,16 +8,18 @@ import { promisify } from 'node:util';
 const scrypt = promisify(scryptCallback);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const defaultDataFile = join(__dirname, '..', 'data', 'users.json');
+const defaultEnvFile = join(__dirname, '..', '.env');
 const defaultSessionSecret = process.env.SESSION_SECRET ?? randomBytes(32).toString('hex');
 const sessions = new Map();
 
 export async function createApp(options = {}) {
   const dataFile = options.dataFile ?? defaultDataFile;
   const sessionSecret = options.sessionSecret ?? defaultSessionSecret;
+  const env = await loadEnvFile(options.envFile ?? defaultEnvFile);
   const adminCredentials = {
-    username: options.adminUsername ?? process.env.ADMIN_USERNAME ?? 'admin',
-    password: options.adminPassword ?? process.env.ADMIN_PASSWORD ?? randomBytes(18).toString('base64url'),
-    nickname: options.adminNickname ?? process.env.ADMIN_NICKNAME ?? '管理员',
+    username: options.adminUsername ?? process.env.ADMIN_USERNAME ?? env.ADMIN_USERNAME ?? 'admin',
+    password: options.adminPassword ?? process.env.ADMIN_PASSWORD ?? env.ADMIN_PASSWORD ?? randomBytes(18).toString('base64url'),
+    nickname: options.adminNickname ?? process.env.ADMIN_NICKNAME ?? env.ADMIN_NICKNAME ?? '管理员',
   };
   const store = createStore(dataFile, adminCredentials);
   await store.initialize();
@@ -30,6 +32,45 @@ export async function createApp(options = {}) {
       sendHtml(response, 500, page('系统错误', '<p class="message error">服务器暂时无法处理请求。</p>'));
     }
   });
+}
+
+async function loadEnvFile(envFile) {
+  try {
+    return parseEnv(await readFile(envFile, 'utf8'));
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return {};
+    }
+    throw error;
+  }
+}
+
+function parseEnv(content) {
+  const env = {};
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) {
+      continue;
+    }
+    const separator = line.indexOf('=');
+    if (separator === -1) {
+      continue;
+    }
+    const key = line.slice(0, separator).trim();
+    const value = line.slice(separator + 1).trim();
+    env[key] = unquoteEnvValue(value);
+  }
+  return env;
+}
+
+function unquoteEnvValue(value) {
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    return value.slice(1, -1);
+  }
+  return value;
 }
 
 async function route(request, response, store, sessionSecret) {

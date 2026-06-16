@@ -23,11 +23,15 @@ npm start
 http://localhost:3000
 ```
 
-建议首次启动时通过环境变量设置初始管理员和端口：
+首次启动前，复制 `.env.example` 为 `.env`，并填写初始管理员信息：
 
-```bash
-ADMIN_USERNAME=your-admin-name ADMIN_PASSWORD=your-password ADMIN_NICKNAME=管理员 PORT=3000 npm start
+```text
+ADMIN_USERNAME=your-admin-name
+ADMIN_PASSWORD=your-admin-password
+ADMIN_NICKNAME=管理员
 ```
+
+也可以继续通过系统环境变量覆盖 `.env` 中的值。
 
 ## 测试
 
