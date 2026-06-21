@@ -1,12 +1,19 @@
 {
-  "name": "dgmxq-user-management",
+  "name": "vue-portfolio-demo",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node scripts/build.js",
-    "start": "node src/server.js",
-    "test": "node --test"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.4.21"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "vite": "^5.2.0"
   },
   "engines": {
     "node": ">=20"
