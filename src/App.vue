@@ -19,7 +19,4 @@ import { profile, projects } from './data/profile.js'
 </template>
 
 <style scoped>
-.app {
-  min-height: 100vh;
-}
 </style>
