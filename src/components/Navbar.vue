@@ -45,7 +45,7 @@ onUnmounted(() => {
       <button
         class="navbar__toggle"
         aria-label="Toggle menu"
-        aria-expanded="isMobileMenuOpen"
+        :aria-expanded="isMobileMenuOpen"
         @click="toggleMobileMenu"
       >
         <span class="navbar__toggle-bar" :class="{ 'open': isMobileMenuOpen }"></span>
