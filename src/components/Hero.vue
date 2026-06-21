@@ -41,7 +41,7 @@ defineProps({
   min-height: 100vh;
   display: flex;
   align-items: center;
-  padding-top: 6rem;
+  padding-top: 5rem;
   background-color: var(--color-bg-alt);
 }
 

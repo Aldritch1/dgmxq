@@ -17,6 +17,3 @@ import { profile, projects } from './data/profile.js'
   <ProjectGrid :projects="projects" />
   <Footer :social="profile.social" />
 </template>
-
-<style scoped>
-</style>
