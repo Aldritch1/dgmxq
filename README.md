@@ -1,80 +1,56 @@
-# 用户管理系统
+# Vue Portfolio Demo
 
-一个面向 EdgeOne Pages 的用户管理系统，支持用户注册、登录、修改个人信息，以及管理员删除普通用户。
+一个基于 Vue 3 + Vite 的个人主页/作品集 demo，明亮卡片风格，响应式布局，可部署到 EdgeOne Pages。
 
 ## 功能
 
-- 用户注册：只需要用户名、密码、昵称
-- 用户登录和退出
-- 修改个人信息：昵称和密码
-- 管理员查看用户列表
-- 管理员删除普通用户
-- 管理员不能删除自己或其他管理员
+- 固定顶部导航栏，支持移动端折叠菜单
+- Hero 个人介绍区域
+- 项目作品集卡片网格
+- 页脚社交链接
+- 响应式适配移动端、平板、桌面
 
 ## 项目结构
 
 ```text
-functions/[[default]].js  EdgeOne Pages Functions 入口
-public/style.css          静态样式资源
-src/app.js                路由和业务流程
-src/storage.js            EdgeOne KV / 内存存储适配
-src/server.js             本地 Node 预览入口
+public/                 静态资源（头像、项目图）
+src/
+  assets/styles.css     全局样式与 CSS 变量
+  components/           Vue 组件
+  data/profile.js       个人资料与项目数据
+  App.vue               页面根组件
+  main.js               应用入口
+index.html              HTML 入口
+vite.config.js          Vite 配置
 ```
 
-## 本地运行
-
-复制 `.env.example` 为 `.env`，并填写初始管理员信息：
-
-```text
-ADMIN_USERNAME=your-admin-name
-ADMIN_PASSWORD=your-admin-password
-ADMIN_NICKNAME=管理员
-SESSION_SECRET=your-session-secret
-```
-
-启动本地预览：
+## 本地开发
 
 ```bash
-npm start
+npm install
+npm run dev
 ```
 
-浏览器打开：
+浏览器打开终端输出的地址，通常为 `http://localhost:5173`。
 
-```text
-http://localhost:3000
-```
-
-## 测试和构建
+## 构建
 
 ```bash
-npm test
 npm run build
 ```
 
+构建产物输出到 `dist` 目录。
+
 ## EdgeOne Pages 部署
 
-在 EdgeOne Pages 中使用以下配置：
+在 EdgeOne Pages 控制台创建项目并关联仓库，使用以下配置：
 
-```text
-安装命令：npm install
-构建命令：npm run build
-输出目录：public
-函数目录：functions
-```
+- 安装命令：`npm install`
+- 构建命令：`npm run build`
+- 输出目录：`dist`
 
-在 Pages 项目中配置环境变量：
+无需额外环境变量或后端函数。
 
-```text
-ADMIN_USERNAME
-ADMIN_PASSWORD
-ADMIN_NICKNAME
-SESSION_SECRET
-```
+## 自定义内容
 
-用户数据需要绑定 EdgeOne KV。建议绑定名使用：
-
-```text
-USER_STORE_KV
-```
-
-代码也兼容 `USERS_KV` 或 `KV` 作为绑定名。第一次请求时，如果 KV 中还没有管理员账户，系统会使用环境变量创建初始管理员。
+修改 `src/data/profile.js` 中的 `profile` 和 `projects` 对象，即可更新个人信息和展示项目。
